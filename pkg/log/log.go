@@ -2,9 +2,8 @@ package log
 
 import (
 	"fmt"
-	"os"
-
 	"github.com/sirupsen/logrus"
+	"os"
 
 	"github.com/fatih/color"
 	"gopkg.in/AlecAivazis/survey.v1/terminal"

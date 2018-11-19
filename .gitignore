@@ -36,3 +36,5 @@ myvalues.yml
 
 vendor/**
 hack/code-generator/**
+
+.DS_Store
