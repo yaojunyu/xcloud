@@ -1,26 +1,40 @@
 package cmd
 
 import (
+	// "bytes"
 	"fmt"
-	"github.com/blang/semver"
-	// "github.com/xcloudnative/xcloud/pkg/binaries"
-	"github.com/xcloudnative/xcloud/pkg/util"
-	logger "github.com/sirupsen/logrus"
-	"github.com/xcloudnative/xcloud/pkg/log"
-	"github.com/xcloudnative/xcloud/pkg/binaries"
-	"gopkg.in/AlecAivazis/survey.v1"
+	// "github.com/xcloudnative/xcloud/pkg/kube/services"
 	"io/ioutil"
 	"net/http"
+	// "net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
+	// "text/template"
+	"time"
 
+	"github.com/xcloudnative/xcloud/pkg/binaries"
+
+	// "gopkg.in/yaml.v2"
+
+	// "github.com/Pallinder/go-randomdata"
+	// "github.com/alexflint/go-filemutex"
+	"github.com/blang/semver"
+	// jenkinsv1 "github.com/xcloudnative/xcloud/pkg/apis/jenkins.io/v1"
+	// "github.com/xcloudnative/xcloud/pkg/gits"
+	"github.com/xcloudnative/xcloud/pkg/kube"
+	"github.com/xcloudnative/xcloud/pkg/log"
+	// "github.com/xcloudnative/xcloud/pkg/maven"
+	"github.com/xcloudnative/xcloud/pkg/prow"
+	"github.com/xcloudnative/xcloud/pkg/util"
 	"github.com/pborman/uuid"
 	"github.com/pkg/errors"
-
 	"github.com/shirou/gopsutil/process"
+	logger "github.com/sirupsen/logrus"
+	"gopkg.in/AlecAivazis/survey.v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -1555,101 +1569,101 @@ func GetSafeUsername(username string) string {
 	return username
 }
 
-//func (o *CommonOptions) installProw() error {
-//
-//	if o.ReleaseName == "" {
-//		o.ReleaseName = kube.DefaultProwReleaseName
-//	}
-//
-//	if o.Chart == "" {
-//		o.Chart = kube.ChartProw
-//	}
-//
-//	var err error
-//	if o.HMACToken == "" {
-//		// why 41?  seems all examples so far have a random token of 41 chars
-//		o.HMACToken, err = util.RandStringBytesMaskImprSrc(41)
-//		if err != nil {
-//			return fmt.Errorf("cannot create a random hmac token for Prow")
-//		}
-//	}
-//
-//	if o.OAUTHToken == "" {
-//		authConfigSvc, err := o.CreateGitAuthConfigService()
-//		if err != nil {
-//			return err
-//		}
-//
-//		config := authConfigSvc.Config()
-//		// lets assume github.com for now so ignore config.CurrentServer
-//		server := config.GetOrCreateServer("https://github.com")
-//		userAuth, err := config.PickServerUserAuth(server, "Git account to be used to send webhook events", o.BatchMode, "", o.In, o.Out, o.Err)
-//		if err != nil {
-//			return err
-//		}
-//		o.OAUTHToken = userAuth.ApiToken
-//	}
-//
-//	if o.Username == "" {
-//		o.Username, err = o.GetClusterUserName()
-//		if err != nil {
-//			return err
-//		}
-//	}
-//
-//	devNamespace, _, err := kube.GetDevNamespace(o.KubeClientCached, o.currentNamespace)
-//	if err != nil {
-//		return fmt.Errorf("cannot find a dev team namespace to get existing exposecontroller config from. %v", err)
-//	}
-//
-//	values := []string{"user=" + o.Username, "oauthToken=" + o.OAUTHToken, "hmacToken=" + o.HMACToken}
-//	setValues := strings.Split(o.SetValues, ",")
-//	values = append(values, setValues...)
-//
-//	// create initial configmaps if they don't already exist, use a dummy repo so tide doesn't start scanning all github
-//	_, err = o.KubeClientCached.CoreV1().ConfigMaps(devNamespace).Get("config", metav1.GetOptions{})
-//	if err != nil {
-//		err = prow.AddApplication(o.KubeClientCached, []string{"jenkins-x/dummy"}, devNamespace, "base")
-//		if err != nil {
-//			return err
-//		}
-//	}
-//
-//	log.Infof("Installing Prow into namespace %s\n", util.ColorInfo(devNamespace))
-//	err = o.retry(2, time.Second, func() (err error) {
-//		err = o.installChart(o.ReleaseName, o.Chart, o.Version, devNamespace, true, values, nil)
-//		return nil
-//	})
-//
-//	if err != nil {
-//		return fmt.Errorf("failed to install Prow: %v", err)
-//	}
-//
-//	log.Infof("Installing knative into namespace %s\n", util.ColorInfo(devNamespace))
-//
-//	err = o.retry(2, time.Second, func() (err error) {
-//		err = o.installChart(kube.DefaultKnativeBuildReleaseName, kube.ChartKnativeBuild, "", devNamespace, true, values, nil)
-//		return nil
-//	})
-//
-//	if err != nil {
-//		return fmt.Errorf("failed to install Knative build: %v", err)
-//	}
-//
-//	log.Infof("Installing BuildTemplates into namespace %s\n", util.ColorInfo(devNamespace))
-//
-//	err = o.retry(2, time.Second, func() (err error) {
-//		err = o.installChart(kube.DefaultBuildTemplatesReleaseName, kube.ChartBuildTemplates, "", devNamespace, true, values, nil)
-//		return nil
-//	})
-//
-//	if err != nil {
-//		return fmt.Errorf("failed to install BuildTemplates: %v", err)
-//	}
-//
-//	return nil
-//}
-//
+func (o *CommonOptions) installProw() error {
+
+	if o.ReleaseName == "" {
+		o.ReleaseName = kube.DefaultProwReleaseName
+	}
+
+	if o.Chart == "" {
+		o.Chart = kube.ChartProw
+	}
+
+	var err error
+	if o.HMACToken == "" {
+		// why 41?  seems all examples so far have a random token of 41 chars
+		o.HMACToken, err = util.RandStringBytesMaskImprSrc(41)
+		if err != nil {
+			return fmt.Errorf("cannot create a random hmac token for Prow")
+		}
+	}
+
+	if o.OAUTHToken == "" {
+		authConfigSvc, err := o.CreateGitAuthConfigService()
+		if err != nil {
+			return err
+		}
+
+		config := authConfigSvc.Config()
+		// lets assume github.com for now so ignore config.CurrentServer
+		server := config.GetOrCreateServer("https://github.com")
+		userAuth, err := config.PickServerUserAuth(server, "Git account to be used to send webhook events", o.BatchMode, "", o.In, o.Out, o.Err)
+		if err != nil {
+			return err
+		}
+		o.OAUTHToken = userAuth.ApiToken
+	}
+
+	if o.Username == "" {
+		o.Username, err = o.GetClusterUserName()
+		if err != nil {
+			return err
+		}
+	}
+
+	devNamespace, _, err := kube.GetDevNamespace(o.KubeClientCached, o.currentNamespace)
+	if err != nil {
+		return fmt.Errorf("cannot find a dev team namespace to get existing exposecontroller config from. %v", err)
+	}
+
+	values := []string{"user=" + o.Username, "oauthToken=" + o.OAUTHToken, "hmacToken=" + o.HMACToken}
+	setValues := strings.Split(o.SetValues, ",")
+	values = append(values, setValues...)
+
+	// create initial configmaps if they don't already exist, use a dummy repo so tide doesn't start scanning all github
+	_, err = o.KubeClientCached.CoreV1().ConfigMaps(devNamespace).Get("config", metav1.GetOptions{})
+	if err != nil {
+		err = prow.AddApplication(o.KubeClientCached, []string{"jenkins-x/dummy"}, devNamespace, "base")
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Infof("Installing Prow into namespace %s\n", util.ColorInfo(devNamespace))
+	err = o.retry(2, time.Second, func() (err error) {
+		err = o.installChart(o.ReleaseName, o.Chart, o.Version, devNamespace, true, values, nil)
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to install Prow: %v", err)
+	}
+
+	log.Infof("Installing knative into namespace %s\n", util.ColorInfo(devNamespace))
+
+	err = o.retry(2, time.Second, func() (err error) {
+		err = o.installChart(kube.DefaultKnativeBuildReleaseName, kube.ChartKnativeBuild, "", devNamespace, true, values, nil)
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to install Knative build: %v", err)
+	}
+
+	log.Infof("Installing BuildTemplates into namespace %s\n", util.ColorInfo(devNamespace))
+
+	err = o.retry(2, time.Second, func() (err error) {
+		err = o.installChart(kube.DefaultBuildTemplatesReleaseName, kube.ChartBuildTemplates, "", devNamespace, true, values, nil)
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to install BuildTemplates: %v", err)
+	}
+
+	return nil
+}
+
 //func (o *CommonOptions) createWebhookProw(gitURL string, gitProvider gits.GitProvider) error {
 //	ns, _, err := kube.GetDevNamespace(o.KubeClientCached, o.currentNamespace)
 //	if err != nil {

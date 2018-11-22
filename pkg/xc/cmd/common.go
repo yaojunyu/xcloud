@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/xcloudnative/xcloud/pkg/client/clientset/versioned"
 	"github.com/xcloudnative/xcloud/pkg/helm"
+	"github.com/xcloudnative/xcloud/pkg/auth"
 	"github.com/xcloudnative/xcloud/pkg/log"
 	"github.com/xcloudnative/xcloud/pkg/util"
 	"github.com/xcloudnative/xcloud/pkg/gits"
@@ -72,7 +73,7 @@ type CommonOptions struct {
 	Kuber               kube.Kuber
 	vaultOperatorClient vaultoperatorclient.Interface
 
-	//Prow
+	Prow
 }
 
 type ServerFlags struct {
@@ -99,21 +100,21 @@ func NewCommonOptions(devNamespace string, factory Factory) CommonOptions {
 		devNamespace:     devNamespace,
 	}
 }
-//
-//// SetDevNamespace configures the current dev namespace
-//func (c *CommonOptions) SetDevNamespace(ns string) {
-//	c.devNamespace = ns
-//	c.currentNamespace = ns
-//	c.KubeClientCached = nil
-//}
-//
-//// Debugf outputs the given text to the console if verbose mode is enabled
-//func (c *CommonOptions) Debugf(format string, a ...interface{}) {
-//	if c.Verbose {
-//		log.Infof(format, a...)
-//	}
-//}
-//
+
+// SetDevNamespace configures the current dev namespace
+func (c *CommonOptions) SetDevNamespace(ns string) {
+	c.devNamespace = ns
+	c.currentNamespace = ns
+	c.KubeClientCached = nil
+}
+
+// Debugf outputs the given text to the console if verbose mode is enabled
+func (c *CommonOptions) Debugf(format string, a ...interface{}) {
+	if c.Verbose {
+		log.Infof(format, a...)
+	}
+}
+
 func (options *CommonOptions) addCommonFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVarP(&options.BatchMode, optionBatchMode, "b", false, "In batch mode the command never prompts for user input")
 	cmd.Flags().BoolVarP(&options.Verbose, optionVerbose, "", false, "Enable verbose logging")
@@ -341,68 +342,68 @@ func (o *CommonOptions) Kube() kube.Kuber {
 //func (o *CommonOptions) findAddonServer(config *auth.AuthConfig, serverFlags *ServerFlags, kind string) (*auth.AuthServer, error) {
 //	return o.findServer(config, serverFlags, kind, "Try creating one via: jx create addon", true)
 //}
-//
-//func (o *CommonOptions) findServer(config *auth.AuthConfig, serverFlags *ServerFlags, defaultKind string, missingServerDescription string, lazyCreate bool) (*auth.AuthServer, error) {
-//	kind := defaultKind
-//	var server *auth.AuthServer
-//	if serverFlags.ServerURL != "" {
-//		server = config.GetServer(serverFlags.ServerURL)
-//		if server == nil {
-//			if lazyCreate {
-//				return config.GetOrCreateServerName(serverFlags.ServerURL, serverFlags.ServerName, kind), nil
-//			}
-//			return nil, util.InvalidOption(optionServerURL, serverFlags.ServerURL, config.GetServerURLs())
-//		}
-//	}
-//	if server == nil && serverFlags.ServerName != "" {
-//		name := serverFlags.ServerName
-//		if lazyCreate {
-//			server = config.GetOrCreateServerName(serverFlags.ServerURL, name, kind)
-//		} else {
-//			server = config.GetServerByName(name)
-//		}
-//		if server == nil {
-//			return nil, util.InvalidOption(optionServerName, name, config.GetServerNames())
-//		}
-//	}
-//	if server == nil {
-//		name := config.CurrentServer
-//		if name != "" && o.BatchMode {
-//			server = config.GetServerByName(name)
-//			if server == nil {
-//				log.Warnf("Current server %s no longer exists\n", name)
-//			}
-//		}
-//	}
-//	if server == nil && len(config.Servers) == 1 {
-//		server = config.Servers[0]
-//	}
-//	if server == nil && len(config.Servers) > 1 {
-//		if o.BatchMode {
-//			return nil, fmt.Errorf("Multiple servers found. Please specify one via the %s option", optionServerName)
-//		}
-//		defaultServerName := ""
-//		if config.CurrentServer != "" {
-//			s := config.GetServer(config.CurrentServer)
-//			if s != nil {
-//				defaultServerName = s.Name
-//			}
-//		}
-//		name, err := util.PickNameWithDefault(config.GetServerNames(), "Pick server to use: ", defaultServerName, "", o.In, o.Out, o.Err)
-//		if err != nil {
-//			return nil, err
-//		}
-//		server = config.GetServerByName(name)
-//		if server == nil {
-//			return nil, fmt.Errorf("Could not find the server for name %s", name)
-//		}
-//	}
-//	if server == nil {
-//		return nil, fmt.Errorf("Could not find a %s. %s", kind, missingServerDescription)
-//	}
-//	return server, nil
-//}
-//
+
+func (o *CommonOptions) findServer(config *auth.AuthConfig, serverFlags *ServerFlags, defaultKind string, missingServerDescription string, lazyCreate bool) (*auth.AuthServer, error) {
+	kind := defaultKind
+	var server *auth.AuthServer
+	if serverFlags.ServerURL != "" {
+		server = config.GetServer(serverFlags.ServerURL)
+		if server == nil {
+			if lazyCreate {
+				return config.GetOrCreateServerName(serverFlags.ServerURL, serverFlags.ServerName, kind), nil
+			}
+			return nil, util.InvalidOption(optionServerURL, serverFlags.ServerURL, config.GetServerURLs())
+		}
+	}
+	if server == nil && serverFlags.ServerName != "" {
+		name := serverFlags.ServerName
+		if lazyCreate {
+			server = config.GetOrCreateServerName(serverFlags.ServerURL, name, kind)
+		} else {
+			server = config.GetServerByName(name)
+		}
+		if server == nil {
+			return nil, util.InvalidOption(optionServerName, name, config.GetServerNames())
+		}
+	}
+	if server == nil {
+		name := config.CurrentServer
+		if name != "" && o.BatchMode {
+			server = config.GetServerByName(name)
+			if server == nil {
+				log.Warnf("Current server %s no longer exists\n", name)
+			}
+		}
+	}
+	if server == nil && len(config.Servers) == 1 {
+		server = config.Servers[0]
+	}
+	if server == nil && len(config.Servers) > 1 {
+		if o.BatchMode {
+			return nil, fmt.Errorf("Multiple servers found. Please specify one via the %s option", optionServerName)
+		}
+		defaultServerName := ""
+		if config.CurrentServer != "" {
+			s := config.GetServer(config.CurrentServer)
+			if s != nil {
+				defaultServerName = s.Name
+			}
+		}
+		name, err := util.PickNameWithDefault(config.GetServerNames(), "Pick server to use: ", defaultServerName, "", o.In, o.Out, o.Err)
+		if err != nil {
+			return nil, err
+		}
+		server = config.GetServerByName(name)
+		if server == nil {
+			return nil, fmt.Errorf("Could not find the server for name %s", name)
+		}
+	}
+	if server == nil {
+		return nil, fmt.Errorf("Could not find a %s. %s", kind, missingServerDescription)
+	}
+	return server, nil
+}
+
 //func (o *CommonOptions) findService(name string) (string, error) {
 //	client, ns, err := o.KubeClient()
 //	if err != nil {

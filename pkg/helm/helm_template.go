@@ -1,25 +1,29 @@
 package helm
 
 import (
-	"github.com/xcloudnative/xcloud/pkg/util"
-	"k8s.io/client-go/kubernetes"
 
+	"bufio"
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
-	// "github.com/xcloudnative/xcloud/pkg/table"
+	"github.com/xcloudnative/xcloud/pkg/table"
 	"k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 
 	"github.com/xcloudnative/xcloud/pkg/kube"
 	"github.com/xcloudnative/xcloud/pkg/log"
+	"github.com/xcloudnative/xcloud/pkg/util"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -111,133 +115,133 @@ func (h *HelmTemplate) Init(clientOnly bool, serviceAccount string, tillerNamesp
 	return h.Client.Init(true, serviceAccount, tillerNamespace, upgrade)
 }
 
-//// AddRepo adds a new helm repo with the given name and URL
-//func (h *HelmTemplate) AddRepo(repo string, URL string) error {
-//	return h.Client.AddRepo(repo, URL)
-//}
-//
-//// RemoveRepo removes the given repo from helm
-//func (h *HelmTemplate) RemoveRepo(repo string) error {
-//	return h.Client.RemoveRepo(repo)
-//}
-//
-//// ListRepos list the installed helm repos together with their URL
-//func (h *HelmTemplate) ListRepos() (map[string]string, error) {
-//	return h.Client.ListRepos()
-//}
-//
-//// SearchCharts searches for all the charts matching the given filter
-//func (h *HelmTemplate) SearchCharts(filter string) ([]ChartSummary, error) {
-//	return h.Client.SearchCharts(filter)
-//}
-//
-//// IsRepoMissing checks if the repository with the given URL is missing from helm
-//func (h *HelmTemplate) IsRepoMissing(URL string) (bool, error) {
-//	return h.Client.IsRepoMissing(URL)
-//}
-//
-//// UpdateRepo updates the helm repositories
-//func (h *HelmTemplate) UpdateRepo() error {
-//	return h.Client.UpdateRepo()
-//}
-//
-//// RemoveRequirementsLock removes the requirements.lock file from the current working directory
-//func (h *HelmTemplate) RemoveRequirementsLock() error {
-//	return h.Client.RemoveRequirementsLock()
-//}
-//
-//// BuildDependency builds the helm dependencies of the helm chart from the current working directory
-//func (h *HelmTemplate) BuildDependency() error {
-//	return h.Client.BuildDependency()
-//}
-//
-//// ListCharts execute the helm list command and returns its output
-//func (h *HelmTemplate) ListCharts() (string, error) {
-//	ns := h.Namespace
-//	list, _ := h.KubeClient.AppsV1beta1().Deployments(ns).List(metav1.ListOptions{})
-//	var buffer bytes.Buffer
-//	writer := bufio.NewWriter(&buffer)
-//	t := table.CreateTable(writer)
-//	t.Separator = "\t"
-//	t.AddRow("NAME", "REVISION", "UPDATED", "STATUS", "CHART", "APP VERSION", "NAMESPACE")
-//	if list != nil {
-//		keys := []string{}
-//		charts := map[string]*ChartListing{}
-//		for _, deploy := range list.Items {
-//			labels := deploy.Labels
-//			ann := deploy.Annotations
-//			if labels != nil && ann != nil {
-//				status := "ERROR"
-//				if deploy.Status.Replicas > 0 {
-//					if deploy.Status.UnavailableReplicas > 0 {
-//						status = "PENDING"
-//					} else {
-//						status = "DEPLOYED"
-//					}
-//				}
-//				updated := deploy.CreationTimestamp.Format("Mon Jan 2 15:04:05 2006")
-//				chartName := ann[AnnotationChartName]
-//				chartVersion := labels[LabelReleaseChartVersion]
-//				info := &ChartListing{
-//					Chart:         chartName,
-//					ChartFullName: chartName + "-" + chartVersion,
-//					Revision:      strconv.FormatInt(deploy.Generation, 10),
-//					Updated:       updated,
-//					Status:        status,
-//					ChartVersion:  chartVersion,
-//					ReleaseName:   labels[LabelReleaseName],
-//					AppVersion:    ann[AnnotationAppVersion],
-//					Namespace:     ns,
-//				}
-//				key := info.ReleaseName
-//				if charts[key] == nil {
-//					charts[key] = info
-//					keys = append(keys, key)
-//				}
-//			}
-//		}
-//		sort.Strings(keys)
-//		for _, key := range keys {
-//			info := charts[key]
-//			if info != nil {
-//				t.AddRow(key, info.Revision, info.Updated, info.Status, info.ChartFullName, info.AppVersion, info.Namespace)
-//			}
-//		}
-//	}
-//	t.Render()
-//	writer.Flush()
-//	return buffer.String(), nil
-//}
-//
-//// SearchChartVersions search all version of the given chart
-//func (h *HelmTemplate) SearchChartVersions(chart string) ([]string, error) {
-//	return h.Client.SearchChartVersions(chart)
-//}
-//
-//// FindChart find a chart in the current working directory, if no chart file is found an error is returned
-//func (h *HelmTemplate) FindChart() (string, error) {
-//	return h.Client.FindChart()
-//}
-//
-//// Lint lints the helm chart from the current working directory and returns the warnings in the output
-//func (h *HelmTemplate) Lint() (string, error) {
-//	return h.Client.Lint()
-//}
-//
-//// Env returns the environment variables for the helmer
-//func (h *HelmTemplate) Env() map[string]string {
-//	return h.Client.Env()
-//}
-//
-//// PackageChart packages the chart from the current working directory
-//func (h *HelmTemplate) PackageChart() error {
-//	return h.Client.PackageChart()
-//}
-//
-//// Version executes the helm version command and returns its output
-//func (h *HelmTemplate) Version(tls bool) (string, error) {
-//	return h.Client.VersionWithArgs(tls, "--client")
-//}
+// AddRepo adds a new helm repo with the given name and URL
+func (h *HelmTemplate) AddRepo(repo string, URL string) error {
+	return h.Client.AddRepo(repo, URL)
+}
+
+// RemoveRepo removes the given repo from helm
+func (h *HelmTemplate) RemoveRepo(repo string) error {
+	return h.Client.RemoveRepo(repo)
+}
+
+// ListRepos list the installed helm repos together with their URL
+func (h *HelmTemplate) ListRepos() (map[string]string, error) {
+	return h.Client.ListRepos()
+}
+
+// SearchCharts searches for all the charts matching the given filter
+func (h *HelmTemplate) SearchCharts(filter string) ([]ChartSummary, error) {
+	return h.Client.SearchCharts(filter)
+}
+
+// IsRepoMissing checks if the repository with the given URL is missing from helm
+func (h *HelmTemplate) IsRepoMissing(URL string) (bool, error) {
+	return h.Client.IsRepoMissing(URL)
+}
+
+// UpdateRepo updates the helm repositories
+func (h *HelmTemplate) UpdateRepo() error {
+	return h.Client.UpdateRepo()
+}
+
+// RemoveRequirementsLock removes the requirements.lock file from the current working directory
+func (h *HelmTemplate) RemoveRequirementsLock() error {
+	return h.Client.RemoveRequirementsLock()
+}
+
+// BuildDependency builds the helm dependencies of the helm chart from the current working directory
+func (h *HelmTemplate) BuildDependency() error {
+	return h.Client.BuildDependency()
+}
+
+// ListCharts execute the helm list command and returns its output
+func (h *HelmTemplate) ListCharts() (string, error) {
+	ns := h.Namespace
+	list, _ := h.KubeClient.AppsV1beta1().Deployments(ns).List(metav1.ListOptions{})
+	var buffer bytes.Buffer
+	writer := bufio.NewWriter(&buffer)
+	t := table.CreateTable(writer)
+	t.Separator = "\t"
+	t.AddRow("NAME", "REVISION", "UPDATED", "STATUS", "CHART", "APP VERSION", "NAMESPACE")
+	if list != nil {
+		keys := []string{}
+		charts := map[string]*ChartListing{}
+		for _, deploy := range list.Items {
+			labels := deploy.Labels
+			ann := deploy.Annotations
+			if labels != nil && ann != nil {
+				status := "ERROR"
+				if deploy.Status.Replicas > 0 {
+					if deploy.Status.UnavailableReplicas > 0 {
+						status = "PENDING"
+					} else {
+						status = "DEPLOYED"
+					}
+				}
+				updated := deploy.CreationTimestamp.Format("Mon Jan 2 15:04:05 2006")
+				chartName := ann[AnnotationChartName]
+				chartVersion := labels[LabelReleaseChartVersion]
+				info := &ChartListing{
+					Chart:         chartName,
+					ChartFullName: chartName + "-" + chartVersion,
+					Revision:      strconv.FormatInt(deploy.Generation, 10),
+					Updated:       updated,
+					Status:        status,
+					ChartVersion:  chartVersion,
+					ReleaseName:   labels[LabelReleaseName],
+					AppVersion:    ann[AnnotationAppVersion],
+					Namespace:     ns,
+				}
+				key := info.ReleaseName
+				if charts[key] == nil {
+					charts[key] = info
+					keys = append(keys, key)
+				}
+			}
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			info := charts[key]
+			if info != nil {
+				t.AddRow(key, info.Revision, info.Updated, info.Status, info.ChartFullName, info.AppVersion, info.Namespace)
+			}
+		}
+	}
+	t.Render()
+	writer.Flush()
+	return buffer.String(), nil
+}
+
+// SearchChartVersions search all version of the given chart
+func (h *HelmTemplate) SearchChartVersions(chart string) ([]string, error) {
+	return h.Client.SearchChartVersions(chart)
+}
+
+// FindChart find a chart in the current working directory, if no chart file is found an error is returned
+func (h *HelmTemplate) FindChart() (string, error) {
+	return h.Client.FindChart()
+}
+
+// Lint lints the helm chart from the current working directory and returns the warnings in the output
+func (h *HelmTemplate) Lint() (string, error) {
+	return h.Client.Lint()
+}
+
+// Env returns the environment variables for the helmer
+func (h *HelmTemplate) Env() map[string]string {
+	return h.Client.Env()
+}
+
+// PackageChart packages the chart from the current working directory
+func (h *HelmTemplate) PackageChart() error {
+	return h.Client.PackageChart()
+}
+
+// Version executes the helm version command and returns its output
+func (h *HelmTemplate) Version(tls bool) (string, error) {
+	return h.Client.VersionWithArgs(tls, "--client")
+}
 
 // Mutation API
 

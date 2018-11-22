@@ -210,39 +210,39 @@ func ProviderAccessTokenURL(kind string, url string, username string) string {
 }
 
 // PickOrganisation picks an organisations login if there is one available
-// func PickOrganisation(orgLister OrganisationLister, userName string, in terminal.FileReader, out terminal.FileWriter, errOut io.Writer) (string, error) {
-// 	prompt := &survey.Select{
-// 		Message: "Which organisation do you want to use?",
-// 		Options: GetOrganizations(orgLister, userName),
-// 		Default: userName,
-// 	}
+func PickOrganisation(orgLister OrganisationLister, userName string, in terminal.FileReader, out terminal.FileWriter, errOut io.Writer) (string, error) {
+	prompt := &survey.Select{
+		Message: "Which organisation do you want to use?",
+		Options: GetOrganizations(orgLister, userName),
+		Default: userName,
+	}
 
-// 	orgName := ""
-// 	surveyOpts := survey.WithStdio(in, out, errOut)
-// 	err := survey.AskOne(prompt, &orgName, nil, surveyOpts)
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	if orgName == userName {
-// 		return "", nil
-// 	}
-// 	return orgName, nil
-// }
+	orgName := ""
+	surveyOpts := survey.WithStdio(in, out, errOut)
+	err := survey.AskOne(prompt, &orgName, nil, surveyOpts)
+	if err != nil {
+		return "", err
+	}
+	if orgName == userName {
+		return "", nil
+	}
+	return orgName, nil
+}
 
-// // GetOrganizations gets the organisation
-// func GetOrganizations(orgLister OrganisationLister, userName string) []string {
-// 	// Always include the username as a pseudo organization
-// 	orgNames := []string{userName}
+// GetOrganizations gets the organisation
+func GetOrganizations(orgLister OrganisationLister, userName string) []string {
+	// Always include the username as a pseudo organization
+	orgNames := []string{userName}
 
-// 	orgs, _ := orgLister.ListOrganisations()
-// 	for _, o := range orgs {
-// 		if name := o.Login; name != "" {
-// 			orgNames = append(orgNames, name)
-// 		}
-// 	}
-// 	sort.Strings(orgNames)
-// 	return orgNames
-// }
+	orgs, _ := orgLister.ListOrganisations()
+	for _, o := range orgs {
+		if name := o.Login; name != "" {
+			orgNames = append(orgNames, name)
+		}
+	}
+	sort.Strings(orgNames)
+	return orgNames
+}
 
 func PickRepositories(provider GitProvider, owner string, message string, selectAll bool, filter string, in terminal.FileReader, out terminal.FileWriter, errOut io.Writer) ([]*GitRepository, error) {
 	answer := []*GitRepository{}
@@ -313,93 +313,93 @@ func (s *GitRepoStatus) IsFailed() bool {
 	return s.State == "error" || s.State == "failure"
 }
 
-// func (i *GitRepositoryInfo) PickOrCreateProvider(authConfigSvc auth.AuthConfigService, message string, batchMode bool, gitKind string, git Gitter, in terminal.FileReader, out terminal.FileWriter, errOut io.Writer) (GitProvider, error) {
-// 	config := authConfigSvc.Config()
-// 	hostUrl := i.HostURLWithoutUser()
-// 	server := config.GetOrCreateServer(hostUrl)
-// 	if server.Kind == "" {
-// 		server.Kind = gitKind
-// 	}
-// 	userAuth, err := config.PickServerUserAuth(server, message, batchMode, "", in, out, errOut)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return i.CreateProviderForUser(server, userAuth, gitKind, git)
-// }
+func (i *GitRepositoryInfo) PickOrCreateProvider(authConfigSvc auth.AuthConfigService, message string, batchMode bool, gitKind string, git Gitter, in terminal.FileReader, out terminal.FileWriter, errOut io.Writer) (GitProvider, error) {
+	config := authConfigSvc.Config()
+	hostUrl := i.HostURLWithoutUser()
+	server := config.GetOrCreateServer(hostUrl)
+	if server.Kind == "" {
+		server.Kind = gitKind
+	}
+	userAuth, err := config.PickServerUserAuth(server, message, batchMode, "", in, out, errOut)
+	if err != nil {
+		return nil, err
+	}
+	return i.CreateProviderForUser(server, userAuth, gitKind, git)
+}
 
-// func (i *GitRepositoryInfo) CreateProviderForUser(server *auth.AuthServer, user *auth.UserAuth, gitKind string, git Gitter) (GitProvider, error) {
-// 	if i.Host == GitHubHost {
-// 		return NewGitHubProvider(server, user, git)
-// 	}
-// 	if gitKind != "" && server.Kind != gitKind {
-// 		server.Kind = gitKind
-// 	}
-// 	return CreateProvider(server, user, git)
-// }
+func (i *GitRepositoryInfo) CreateProviderForUser(server *auth.AuthServer, user *auth.UserAuth, gitKind string, git Gitter) (GitProvider, error) {
+	if i.Host == GitHubHost {
+		return NewGitHubProvider(server, user, git)
+	}
+	if gitKind != "" && server.Kind != gitKind {
+		server.Kind = gitKind
+	}
+	return CreateProvider(server, user, git)
+}
 
-// func (i *GitRepositoryInfo) CreateProvider(authConfigSvc auth.AuthConfigService, gitKind string, git Gitter, batchMode bool, in terminal.FileReader, out terminal.FileWriter, errOut io.Writer) (GitProvider, error) {
-// 	hostUrl := i.HostURLWithoutUser()
-// 	return CreateProviderForURL(authConfigSvc, gitKind, hostUrl, git, batchMode, in, out, errOut)
-// }
+func (i *GitRepositoryInfo) CreateProvider(authConfigSvc auth.AuthConfigService, gitKind string, git Gitter, batchMode bool, in terminal.FileReader, out terminal.FileWriter, errOut io.Writer) (GitProvider, error) {
+	hostUrl := i.HostURLWithoutUser()
+	return CreateProviderForURL(authConfigSvc, gitKind, hostUrl, git, batchMode, in, out, errOut)
+}
 
-// // CreateProviderForURL creates the Git provider for the given git kind and host URL
-// func CreateProviderForURL(authConfigSvc auth.AuthConfigService, gitKind string, hostUrl string, git Gitter, batchMode bool, in terminal.FileReader, out terminal.FileWriter, errOut io.Writer) (GitProvider, error) {
-// 	config := authConfigSvc.Config()
-// 	server := config.GetOrCreateServer(hostUrl)
-// 	url := server.URL
-// 	if gitKind != "" {
-// 		server.Kind = gitKind
-// 	}
-// 	userAuths := authConfigSvc.Config().FindUserAuths(url)
-// 	if len(userAuths) == 0 {
-// 		kind := server.Kind
-// 		if kind != "" {
-// 			userAuth := auth.CreateAuthUserFromEnvironment(strings.ToUpper(kind))
-// 			if !userAuth.IsInvalid() {
-// 				return CreateProvider(server, &userAuth, git)
-// 			}
-// 		}
-// 		userAuth := auth.CreateAuthUserFromEnvironment("GIT")
-// 		if !userAuth.IsInvalid() {
-// 			return CreateProvider(server, &userAuth, git)
-// 		}
-// 	}
-// 	if len(userAuths) > 0 {
-// 		// TODO use default user???
-// 		auth := userAuths[0]
-// 		return CreateProvider(server, auth, git)
-// 	}
-// 	auth, err := createUserForServer(batchMode, authConfigSvc, server, git, in, out, errOut)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return CreateProvider(server, auth, git)
-// }
+// CreateProviderForURL creates the Git provider for the given git kind and host URL
+func CreateProviderForURL(authConfigSvc auth.AuthConfigService, gitKind string, hostUrl string, git Gitter, batchMode bool, in terminal.FileReader, out terminal.FileWriter, errOut io.Writer) (GitProvider, error) {
+	config := authConfigSvc.Config()
+	server := config.GetOrCreateServer(hostUrl)
+	url := server.URL
+	if gitKind != "" {
+		server.Kind = gitKind
+	}
+	userAuths := authConfigSvc.Config().FindUserAuths(url)
+	if len(userAuths) == 0 {
+		kind := server.Kind
+		if kind != "" {
+			userAuth := auth.CreateAuthUserFromEnvironment(strings.ToUpper(kind))
+			if !userAuth.IsInvalid() {
+				return CreateProvider(server, &userAuth, git)
+			}
+		}
+		userAuth := auth.CreateAuthUserFromEnvironment("GIT")
+		if !userAuth.IsInvalid() {
+			return CreateProvider(server, &userAuth, git)
+		}
+	}
+	if len(userAuths) > 0 {
+		// TODO use default user???
+		auth := userAuths[0]
+		return CreateProvider(server, auth, git)
+	}
+	auth, err := createUserForServer(batchMode, authConfigSvc, server, git, in, out, errOut)
+	if err != nil {
+		return nil, err
+	}
+	return CreateProvider(server, auth, git)
+}
 
-// func createUserForServer(batchMode bool, authConfigSvc auth.AuthConfigService, server *auth.AuthServer,
-// 	git Gitter, in terminal.FileReader, out terminal.FileWriter, errOut io.Writer) (*auth.UserAuth, error) {
-// 	userAuth := &auth.UserAuth{}
+func createUserForServer(batchMode bool, authConfigSvc auth.AuthConfigService, server *auth.AuthServer,
+	git Gitter, in terminal.FileReader, out terminal.FileWriter, errOut io.Writer) (*auth.UserAuth, error) {
+	userAuth := &auth.UserAuth{}
 
-// 	f := func(username string) error {
-// 		git.PrintCreateRepositoryGenerateAccessToken(server, username, out)
-// 		return nil
-// 	}
+	f := func(username string) error {
+		git.PrintCreateRepositoryGenerateAccessToken(server, username, out)
+		return nil
+	}
 
-// 	// TODO could we guess this based on the users ~/.git for github?
-// 	defaultUserName := ""
-// 	err := authConfigSvc.Config().EditUserAuth(server.Label(), userAuth, defaultUserName, false, batchMode, f, in, out, errOut)
-// 	if err != nil {
-// 		return userAuth, err
-// 	}
+	// TODO could we guess this based on the users ~/.git for github?
+	defaultUserName := ""
+	err := authConfigSvc.Config().EditUserAuth(server.Label(), userAuth, defaultUserName, false, batchMode, f, in, out, errOut)
+	if err != nil {
+		return userAuth, err
+	}
 
-// 	// TODO lets verify the auth works
+	// TODO lets verify the auth works
 
-// 	err = authConfigSvc.SaveUserAuth(server.URL, userAuth)
-// 	if err != nil {
-// 		return userAuth, fmt.Errorf("failed to store git auth configuration %s", err)
-// 	}
-// 	if userAuth.IsInvalid() {
-// 		return userAuth, fmt.Errorf("you did not properly define the user authentication")
-// 	}
-// 	return userAuth, nil
-// }
+	err = authConfigSvc.SaveUserAuth(server.URL, userAuth)
+	if err != nil {
+		return userAuth, fmt.Errorf("failed to store git auth configuration %s", err)
+	}
+	if userAuth.IsInvalid() {
+		return userAuth, fmt.Errorf("you did not properly define the user authentication")
+	}
+	return userAuth, nil
+}
