@@ -22,7 +22,7 @@ set -o pipefail
 echo "Installing the code-generator"
 VERSION='kubernetes-1.11.3'
 CODE_GENERATOR='./hack/code-generator'
-rm -rf ${CODE_GENERATOR} 2>/dev/null 
+rm -rf ${CODE_GENERATOR} 2>/dev/null
 git clone --branch ${VERSION} https://github.com/kubernetes/code-generator.git ${CODE_GENERATOR} 2>/dev/null
 
 export GO111MODULE=on 
@@ -39,6 +39,6 @@ echo "Generating code to ${OUTDIR}"
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 ${CODEGEN_PKG}/generate-groups.sh all \
   github.com/xcloudnative/xcloud/pkg/client github.com/xcloudnative/xcloud/pkg/apis \
-  jenkins.io:v1 \
+  xcloudnative.io:v1alpha1 \
   --output-base "${OUTDIR}" \
   --go-header-file ${SCRIPT_ROOT}/hack/custom-boilerplate.go.txt

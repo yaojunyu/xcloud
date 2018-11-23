@@ -1,0 +1,264 @@
+# This is an auto-generated file. DO NOT EDIT
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: xflows.xcloudnative.io
+spec:
+  group: xcloudnative.io
+  names:
+    kind: Xflow
+    plural: xflows
+    shortNames:
+    - xf
+  scope: Namespaced
+  version: v1alpha1
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: xcloud
+  namespace: xcloud
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: xcloud-ui
+  namespace: xcloud
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+  name: xcloud-aggregate-to-admin
+rules:
+- apiGroups:
+  - xcloudnative.io
+  resources:
+  - xflows
+  - xflows/finalizers
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-edit: "true"
+  name: xcloud-aggregate-to-edit
+rules:
+- apiGroups:
+  - xcloudnative.io
+  resources:
+  - xflows
+  - xflows/finalizers
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-view: "true"
+  name: xcloud-aggregate-to-view
+rules:
+- apiGroups:
+  - xcloudnative.io
+  resources:
+  - xflows
+  - xflows/finalizers
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: xcloud-cluster-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/exec
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - delete
+- apiGroups:
+  - xcloudnative.io
+  resources:
+  - xflows
+  - xflows/finalizers
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: xcloud-ui-cluster-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/exec
+  - pods/log
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+- apiGroups:
+  - xcloudnative.io
+  resources:
+  - xflows
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: xcloud-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: xcloud-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: xcloud
+  namespace: xcloud
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: xcloud-ui-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: xcloud-ui-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: xcloud-ui
+  namespace: xcloud
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: xflow-controller-configmap
+  namespace: xcloud
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xcloud-ui
+  namespace: xcloud
+spec:
+  ports:
+  - port: 80
+    targetPort: 8001
+  selector:
+    app: xcloud-ui
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: xcloud-ui
+  namespace: xcloud
+spec:
+  selector:
+    matchLabels:
+      app: xcloud-ui
+  template:
+    metadata:
+      labels:
+        app: xcloud-ui
+    spec:
+      containers:
+      - env:
+        - name: ARGO_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: IN_CLUSTER
+          value: "true"
+        - name: ENABLE_WEB_CONSOLE
+          value: "false"
+        - name: BASE_HREF
+          value: /
+        image: argoproj/argoui:v2.2.1
+        name: xcloud-ui
+      serviceAccountName: xcloud-ui
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: xflow-controller
+  namespace: xcloud
+spec:
+  selector:
+    matchLabels:
+      app: xflow-controller
+  template:
+    metadata:
+      labels:
+        app: xflow-controller
+    spec:
+      containers:
+      - args:
+        - --configmap
+        - xflow-controller-configmap
+        - --executor-image
+        - argoproj/argoexec:v2.2.1
+        command:
+        - xflow-controller
+        image: xcloudnative/xflow-controller:v2.2.1
+        name: xflow-controller
+      serviceAccountName: xcloud

@@ -9,7 +9,7 @@ import (
 
 	versioned "github.com/xcloudnative/xcloud/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/xcloudnative/xcloud/pkg/client/informers/externalversions/internalinterfaces"
-	jenkinsio "github.com/xcloudnative/xcloud/pkg/client/informers/externalversions/jenkins.io"
+	xcloudnativeio "github.com/xcloudnative/xcloud/pkg/client/informers/externalversions/xcloudnative.io"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -156,9 +156,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Jenkins() jenkinsio.Interface
+	Xcloudnative() xcloudnativeio.Interface
 }
 
-func (f *sharedInformerFactory) Jenkins() jenkinsio.Interface {
-	return jenkinsio.New(f, f.namespace, f.tweakListOptions)
+func (f *sharedInformerFactory) Xcloudnative() xcloudnativeio.Interface {
+	return xcloudnativeio.New(f, f.namespace, f.tweakListOptions)
 }

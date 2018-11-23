@@ -4,8 +4,8 @@ package fake
 
 import (
 	clientset "github.com/xcloudnative/xcloud/pkg/client/clientset/versioned"
-	jenkinsv1 "github.com/xcloudnative/xcloud/pkg/client/clientset/versioned/typed/jenkins.io/v1"
-	fakejenkinsv1 "github.com/xcloudnative/xcloud/pkg/client/clientset/versioned/typed/jenkins.io/v1/fake"
+	xcloudnativev1alpha1 "github.com/xcloudnative/xcloud/pkg/client/clientset/versioned/typed/xcloudnative.io/v1alpha1"
+	fakexcloudnativev1alpha1 "github.com/xcloudnative/xcloud/pkg/client/clientset/versioned/typed/xcloudnative.io/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -55,12 +55,12 @@ func (c *Clientset) Discovery() discovery.DiscoveryInterface {
 
 var _ clientset.Interface = &Clientset{}
 
-// JenkinsV1 retrieves the JenkinsV1Client
-func (c *Clientset) JenkinsV1() jenkinsv1.JenkinsV1Interface {
-	return &fakejenkinsv1.FakeJenkinsV1{Fake: &c.Fake}
+// XcloudnativeV1alpha1 retrieves the XcloudnativeV1alpha1Client
+func (c *Clientset) XcloudnativeV1alpha1() xcloudnativev1alpha1.XcloudnativeV1alpha1Interface {
+	return &fakexcloudnativev1alpha1.FakeXcloudnativeV1alpha1{Fake: &c.Fake}
 }
 
-// Jenkins retrieves the JenkinsV1Client
-func (c *Clientset) Jenkins() jenkinsv1.JenkinsV1Interface {
-	return &fakejenkinsv1.FakeJenkinsV1{Fake: &c.Fake}
+// Xcloudnative retrieves the XcloudnativeV1alpha1Client
+func (c *Clientset) Xcloudnative() xcloudnativev1alpha1.XcloudnativeV1alpha1Interface {
+	return &fakexcloudnativev1alpha1.FakeXcloudnativeV1alpha1{Fake: &c.Fake}
 }

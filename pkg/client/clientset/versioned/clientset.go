@@ -3,7 +3,7 @@
 package versioned
 
 import (
-	jenkinsv1 "github.com/xcloudnative/xcloud/pkg/client/clientset/versioned/typed/jenkins.io/v1"
+	xcloudnativev1alpha1 "github.com/xcloudnative/xcloud/pkg/client/clientset/versioned/typed/xcloudnative.io/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -11,27 +11,27 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	JenkinsV1() jenkinsv1.JenkinsV1Interface
+	XcloudnativeV1alpha1() xcloudnativev1alpha1.XcloudnativeV1alpha1Interface
 	// Deprecated: please explicitly pick a version if possible.
-	Jenkins() jenkinsv1.JenkinsV1Interface
+	Xcloudnative() xcloudnativev1alpha1.XcloudnativeV1alpha1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	jenkinsV1 *jenkinsv1.JenkinsV1Client
+	xcloudnativeV1alpha1 *xcloudnativev1alpha1.XcloudnativeV1alpha1Client
 }
 
-// JenkinsV1 retrieves the JenkinsV1Client
-func (c *Clientset) JenkinsV1() jenkinsv1.JenkinsV1Interface {
-	return c.jenkinsV1
+// XcloudnativeV1alpha1 retrieves the XcloudnativeV1alpha1Client
+func (c *Clientset) XcloudnativeV1alpha1() xcloudnativev1alpha1.XcloudnativeV1alpha1Interface {
+	return c.xcloudnativeV1alpha1
 }
 
-// Deprecated: Jenkins retrieves the default version of JenkinsClient.
+// Deprecated: Xcloudnative retrieves the default version of XcloudnativeClient.
 // Please explicitly pick a version.
-func (c *Clientset) Jenkins() jenkinsv1.JenkinsV1Interface {
-	return c.jenkinsV1
+func (c *Clientset) Xcloudnative() xcloudnativev1alpha1.XcloudnativeV1alpha1Interface {
+	return c.xcloudnativeV1alpha1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -50,7 +50,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.jenkinsV1, err = jenkinsv1.NewForConfig(&configShallowCopy)
+	cs.xcloudnativeV1alpha1, err = xcloudnativev1alpha1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.jenkinsV1 = jenkinsv1.NewForConfigOrDie(c)
+	cs.xcloudnativeV1alpha1 = xcloudnativev1alpha1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -75,7 +75,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.jenkinsV1 = jenkinsv1.New(c)
+	cs.xcloudnativeV1alpha1 = xcloudnativev1alpha1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

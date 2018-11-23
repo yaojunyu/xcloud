@@ -5,7 +5,7 @@ package externalversions
 import (
 	"fmt"
 
-	v1 "github.com/xcloudnative/xcloud/pkg/apis/jenkins.io/v1"
+	v1alpha1 "github.com/xcloudnative/xcloud/pkg/apis/xcloudnative.io/v1alpha1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -36,27 +36,9 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=jenkins.io, Version=v1
-	case v1.SchemeGroupVersion.WithResource("commitstatuses"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Jenkins().V1().CommitStatuses().Informer()}, nil
-	case v1.SchemeGroupVersion.WithResource("environments"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Jenkins().V1().Environments().Informer()}, nil
-	case v1.SchemeGroupVersion.WithResource("environmentrolebindings"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Jenkins().V1().EnvironmentRoleBindings().Informer()}, nil
-	case v1.SchemeGroupVersion.WithResource("extensions"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Jenkins().V1().Extensions().Informer()}, nil
-	case v1.SchemeGroupVersion.WithResource("gitservices"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Jenkins().V1().GitServices().Informer()}, nil
-	case v1.SchemeGroupVersion.WithResource("pipelineactivities"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Jenkins().V1().PipelineActivities().Informer()}, nil
-	case v1.SchemeGroupVersion.WithResource("releases"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Jenkins().V1().Releases().Informer()}, nil
-	case v1.SchemeGroupVersion.WithResource("teams"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Jenkins().V1().Teams().Informer()}, nil
-	case v1.SchemeGroupVersion.WithResource("users"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Jenkins().V1().Users().Informer()}, nil
-	case v1.SchemeGroupVersion.WithResource("workflows"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Jenkins().V1().Workflows().Informer()}, nil
+	// Group=xcloudnative.io, Version=v1alpha1
+	case v1alpha1.SchemeGroupVersion.WithResource("xflows"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Xcloudnative().V1alpha1().Xflows().Informer()}, nil
 
 	}
 
